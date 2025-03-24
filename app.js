@@ -4,11 +4,12 @@ const Express= require("express");
 const BodyParser=require("body-parser");
 const mongoose=require("mongoose");
 const bcrypt=require("bcryptjs");
+require("dotenv").config();
 const app = Express();
 
-const PORT= 5000;
+const PORT= process.env.PORT;
 
-mongoose.connect("mongodb://127.0.0.1:27017/college"); 
+mongoose.connect('$(process.env.MONGOURL)/ExampleDB'); 
 
 const signUpSchema=new mongoose.Schema({
     email:String,
@@ -42,13 +43,13 @@ app.get("/SignUp",(req,res)=>{
 });
 
 app.post("/SignUp",async(req,res)=>{
-    const Email=req.body.email;
+    try{
+        const Email=req.body.email;
     const Password=req.body.password;
-
-    if(!Email||!Password){
-        res.status(500).send("<h1>please enter the fields</h1>");
-
+    if(!Email || !Password){
+        res.send("please enter the fields")
     }
+    
     //creating salt
     const salt=await bcrypt.genSalt(10);
     const hash=await bcrypt.hash(Password,salt);
@@ -59,29 +60,40 @@ app.post("/SignUp",async(req,res)=>{
     });
     newUser.save(); 
     res.send("<h1>signup successful</h1>");
+
+    }catch(error){
+        res.status(500).send(error);
+    }
+    
 })
 
 app.post("/login",async(req,res)=>{
-    const Email=req.body.email;
-    const Password=req.body.password;
-
-    if(!Email||!Password){
-        res.status(500).send("<h1>please enter the fields</h1>");
-
+    try{
+        const Email=req.body.email;
+        const Password=req.body.password;
+    
+        if(!Email||!Password){
+            // res.status(402).send("<h1>please enter the fields</h1>");
+            throw new error("please enter the fields");
+    
+        }
+        const userDetail=await User.findOne({"email":Email});
+    
+        if(!userDetail){
+            res.status(500).send("<h1>please signup</h1>");
+        }
+        // if(userDetail.password !== Password){
+        //     res.status(500).send("<h1>password is incorrect</h1>");
+        // }
+        const comparePass=await bcrypt.compare(Password,userDetail.password);
+        if(!comparePass){
+            res.status(500).send("<h1>password incorrect</h1>");
+        }
+        res.send("logged in");
+    }catch(error){
+        res.status(500).send(error);
     }
-    const userDetail=await User.findOne({"email":Email});
-
-    if(!userDetail){
-        res.status(500).send("<h1>please signup</h1>");
-    }
-    // if(userDetail.password !== Password){
-    //     res.status(500).send("<h1>password is incorrect</h1>");
-    // }
-    const comparePass=await bcrypt.compare(Password,userDetail.password);
-    if(!comparePass){
-        res.status(500).send("<h1>password incorrect</h1>");
-    }
-    res.send("logged in");
+    
     
 })
 
@@ -108,7 +120,7 @@ app.post("/forgotPassword",async(req,res)=>{
 
 
 app.listen(PORT,()=>{
-    console.log(`serving on port 5000 ${PORT}`)
+    console.log(`serving on port  ${PORT} `);
  })
 
 
@@ -131,7 +143,49 @@ app.listen(PORT,()=>{
 // app.get("/",(req,res)=>{
 //      res.send("<h1>this is node.js </h1>");
 // })
+// app.post("/SignUp",async(req,res)=>{
+//     const Email=req.body.email;
+//     const Password=req.body.password;
 
+//     if(!Email||!Password){
+//         res.status(500).send("<h1>please enter the fields</h1>");
+
+//     }
+//     //creating salt
+//     const salt=await bcrypt.genSalt(10);
+//     const hash=await bcrypt.hash(Password,salt);
+//     const newUser= new User({
+//         email:Email,
+//         password:hash
+//         //password:Password
+//     });
+//     newUser.save(); 
+//     res.send("<h1>signup successful</h1>");
+// })
+
+// app.post("/login",async(req,res)=>{
+//     const Email=req.body.email;
+//     const Password=req.body.password;
+
+//     if(!Email||!Password){
+//         res.status(500).send("<h1>please enter the fields</h1>");
+
+//     }
+//     const userDetail=await User.findOne({"email":Email});
+
+//     if(!userDetail){
+//         res.status(500).send("<h1>please signup</h1>");
+//     }
+//     // if(userDetail.password !== Password){
+//     //     res.status(500).send("<h1>password is incorrect</h1>");
+//     // }
+//     const comparePass=await bcrypt.compare(Password,userDetail.password);
+//     if(!comparePass){
+//         res.status(500).send("<h1>password incorrect</h1>");
+//     }
+//     res.send("logged in");
+    
+// })
 
 
 // app.post("/contact",(req,res)=>{
